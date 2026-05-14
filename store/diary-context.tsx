@@ -4,13 +4,14 @@ import React, { createContext, useContext, useEffect, useReducer } from 'react';
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type Priority = 'low' | 'medium' | 'high';
-export type TodoCategory = 'work' | 'personal' | 'shopping' | 'health' | 'other';
+export type TodoCategory = 'work' | 'personal' | 'shopping' | 'health' | 'exercise' | 'other';
 export type ExpenseCategory =
     | 'food'
     | 'transport'
     | 'shopping'
     | 'entertainment'
     | 'health'
+    | 'exercise'
     | 'bills'
     | 'salary'
     | 'other';

@@ -38,6 +38,7 @@ const TODO_CATEGORIES: { key: TodoCategory; emoji: string; label: string }[] = [
     { key: 'personal', emoji: '👤', label: 'Personal' },
     { key: 'shopping', emoji: '🛒', label: 'Shopping' },
     { key: 'health', emoji: '❤️', label: 'Health' },
+    { key: 'exercise', emoji: '🏃', label: 'Exercise' },
     { key: 'other', emoji: '📌', label: 'Other' },
 ];
 
@@ -47,6 +48,7 @@ const EXPENSE_CATS: { key: ExpenseCategory; emoji: string; label: string }[] = [
     { key: 'shopping', emoji: '🛍️', label: 'Shopping' },
     { key: 'entertainment', emoji: '🎬', label: 'Entertainment' },
     { key: 'health', emoji: '💊', label: 'Health' },
+    { key: 'exercise', emoji: '🏋️', label: 'Exercise' },
     { key: 'bills', emoji: '📄', label: 'Bills' },
     { key: 'salary', emoji: '💰', label: 'Salary' },
     { key: 'other', emoji: '📦', label: 'Other' },
@@ -134,7 +136,6 @@ function TodoTab({ date, c, diary }: { date: string; c: (typeof Colors)['light']
     const [reminderEnabled, setReminderEnabled] = useState(false);
     const [reminderTime, setReminderTime] = useState('09:00');
     const [autoSpillover, setAutoSpillover] = useState(false);
-    const [itemType, setItemType] = useState<'task' | 'activity'>('task');
     const [activityMode, setActivityMode] = useState<'timer' | 'stopwatch' | 'none'>('none');
     const [timerDurationStr, setTimerDurationStr] = useState('');
 
@@ -147,14 +148,13 @@ function TodoTab({ date, c, diary }: { date: string; c: (typeof Colors)['light']
     const [editReminderEnabled, setEditReminderEnabled] = useState(false);
     const [editReminderTime, setEditReminderTime] = useState('09:00');
     const [editAutoSpillover, setEditAutoSpillover] = useState(false);
-    const [editItemType, setEditItemType] = useState<'task' | 'activity'>('task');
     const [editActivityMode, setEditActivityMode] = useState<'timer' | 'stopwatch' | 'none'>('none');
     const [editTimerDurationStr, setEditTimerDurationStr] = useState('');
 
     function resetAddForm() {
         setTitle(''); setCategory('personal'); setPriority('medium');
         setReminderEnabled(false); setReminderTime('09:00'); setAutoSpillover(false);
-        setItemType('task'); setActivityMode('none'); setTimerDurationStr('');
+        setActivityMode('none'); setTimerDurationStr('');
     }
 
     function openEdit(todo: typeof dayTodos[0]) {
@@ -165,7 +165,6 @@ function TodoTab({ date, c, diary }: { date: string; c: (typeof Colors)['light']
         setEditReminderEnabled(!!todo.reminderTime);
         setEditReminderTime(todo.reminderTime ?? '09:00');
         setEditAutoSpillover(!!todo.autoSpillover);
-        setEditItemType(todo.itemType ?? 'task');
         setEditActivityMode(todo.activityMode ?? 'none');
         setEditTimerDurationStr(todo.timerDuration ? String(Math.round(todo.timerDuration / 60)) : '');
         setEditModal(true);
@@ -174,13 +173,14 @@ function TodoTab({ date, c, diary }: { date: string; c: (typeof Colors)['light']
     async function handleAdd() {
         if (!title.trim()) { Alert.alert('Error', 'Task title is required'); return; }
         const rTime = reminderEnabled ? reminderTime : undefined;
-        const durSecs = itemType === 'activity' && activityMode === 'timer'
+        const derivedItemType = activityMode === 'none' ? 'task' : 'activity';
+        const durSecs = activityMode === 'timer'
             ? (parseFloat(timerDurationStr) * 60 || undefined) : undefined;
         addTodo({
             title: title.trim(), completed: false, category, priority,
             dueDate: date, reminderTime: rTime, autoSpillover,
-            itemType,
-            activityMode: itemType === 'activity' && activityMode !== 'none' ? activityMode : undefined,
+            itemType: derivedItemType,
+            activityMode: activityMode !== 'none' ? activityMode : undefined,
             timerDuration: durSecs,
         });
         resetAddForm();
@@ -209,7 +209,8 @@ function TodoTab({ date, c, diary }: { date: string; c: (typeof Colors)['light']
         }
 
         const rTime = editReminderEnabled ? editReminderTime : undefined;
-        const editDurSecs = editItemType === 'activity' && editActivityMode === 'timer'
+        const derivedEditItemType = editActivityMode === 'none' ? 'task' : 'activity';
+        const editDurSecs = editActivityMode === 'timer'
             ? (parseFloat(editTimerDurationStr) * 60 || undefined) : undefined;
         const updated = {
             ...editingTodo,
@@ -219,8 +220,8 @@ function TodoTab({ date, c, diary }: { date: string; c: (typeof Colors)['light']
             reminderTime: rTime,
             autoSpillover: editAutoSpillover,
             notificationId: editReminderEnabled ? editingTodo.notificationId : undefined,
-            itemType: editItemType,
-            activityMode: editItemType === 'activity' && editActivityMode !== 'none' ? editActivityMode : undefined,
+            itemType: derivedEditItemType,
+            activityMode: editActivityMode !== 'none' ? editActivityMode : undefined,
             timerDuration: editDurSecs,
         };
         updateTodo(updated);
@@ -326,7 +327,7 @@ function TodoTab({ date, c, diary }: { date: string; c: (typeof Colors)['light']
                                     </TouchableOpacity>
                                 </View>
                             </View>
-                            {todo.itemType === 'activity' && !!todo.activityMode && todo.activityMode !== 'none' && (
+                            {!!todo.activityMode && todo.activityMode !== 'none' && (
                                 <ActivityTimer todo={todo} c={c} updateTodo={updateTodo} />
                             )}
                         </View>
@@ -347,16 +348,12 @@ function TodoTab({ date, c, diary }: { date: string; c: (typeof Colors)['light']
                         <ChipRow
                             items={[{ key: 'high', label: '🔴 High' }, { key: 'medium', label: '🟡 Medium' }, { key: 'low', label: '🟢 Low' }]}
                             selected={priority} onSelect={v => setPriority(v as Priority)} c={c} />
-                        <Label text="Type" c={c} />
+                        <Label text="Mode" c={c} />
                         <ChipRow
-                            items={[{ key: 'task', label: 'Task' }, { key: 'activity', label: 'Activity' }]}
-                            selected={itemType} onSelect={v => setItemType(v as 'task' | 'activity')} c={c} />
-                        {itemType === 'activity' && (
+                            items={[{ key: 'none', label: 'None' }, { key: 'timer', label: 'Timer' }, { key: 'stopwatch', label: 'Stopwatch' }]}
+                            selected={activityMode} onSelect={v => setActivityMode(v as 'timer' | 'stopwatch' | 'none')} c={c} />
+                        {activityMode !== 'none' && (
                             <>
-                                <Label text="Activity Mode" c={c} />
-                                <ChipRow
-                                    items={[{ key: 'none', label: 'None' }, { key: 'stopwatch', label: 'Stopwatch' }, { key: 'timer', label: 'Countdown Timer' }]}
-                                    selected={activityMode} onSelect={v => setActivityMode(v as 'timer' | 'stopwatch' | 'none')} c={c} />
                                 {activityMode === 'timer' && (
                                     <>
                                         <Label text="Duration (minutes)" c={c} />
@@ -399,16 +396,12 @@ function TodoTab({ date, c, diary }: { date: string; c: (typeof Colors)['light']
                         <ChipRow
                             items={[{ key: 'high', label: '🔴 High' }, { key: 'medium', label: '🟡 Medium' }, { key: 'low', label: '🟢 Low' }]}
                             selected={editPriority} onSelect={v => setEditPriority(v as Priority)} c={c} />
-                        <Label text="Type" c={c} />
+                        <Label text="Mode" c={c} />
                         <ChipRow
-                            items={[{ key: 'task', label: 'Task' }, { key: 'activity', label: 'Activity' }]}
-                            selected={editItemType} onSelect={v => setEditItemType(v as 'task' | 'activity')} c={c} />
-                        {editItemType === 'activity' && (
+                            items={[{ key: 'none', label: 'None' }, { key: 'timer', label: 'Timer' }, { key: 'stopwatch', label: 'Stopwatch' }]}
+                            selected={editActivityMode} onSelect={v => setEditActivityMode(v as 'timer' | 'stopwatch' | 'none')} c={c} />
+                        {editActivityMode !== 'none' && (
                             <>
-                                <Label text="Activity Mode" c={c} />
-                                <ChipRow
-                                    items={[{ key: 'none', label: 'None' }, { key: 'stopwatch', label: 'Stopwatch' }, { key: 'timer', label: 'Countdown Timer' }]}
-                                    selected={editActivityMode} onSelect={v => setEditActivityMode(v as 'timer' | 'stopwatch' | 'none')} c={c} />
                                 {editActivityMode === 'timer' && (
                                     <>
                                         <Label text="Duration (minutes)" c={c} />
@@ -467,6 +460,13 @@ function ReminderFields({ enabled, onToggleEnabled, time, onChangeTime, forDate,
         <>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, marginBottom: 4 }}>
                 <View>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: c.text }}>↩ Auto-Spillover</Text>
+                    <Text style={{ fontSize: 11, color: c.subtext, marginTop: 2 }}>Move to next day automatically if not done</Text>
+                </View>
+                <Switch value={autoSpillover} onValueChange={onToggleAuto} trackColor={{ false: c.border, true: c.accent }} thumbColor={autoSpillover ? '#fff' : '#f4f3f4'} />
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, marginBottom: 4 }}>
+                <View>
                     <Text style={{ fontSize: 13, fontWeight: '600', color: c.text }}>🔔 Set Reminder</Text>
                     <Text style={{ fontSize: 11, color: c.subtext, marginTop: 2 }}>Alarm will ring at the chosen time</Text>
                 </View>
@@ -500,13 +500,6 @@ function ReminderFields({ enabled, onToggleEnabled, time, onChangeTime, forDate,
                     <Text style={{ fontSize: 11, color: c.subtext, marginTop: 6 }}>Fires on {forDate} at {time}</Text>
                 </View>
             )}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, marginBottom: 4 }}>
-                <View>
-                    <Text style={{ fontSize: 13, fontWeight: '600', color: c.text }}>↩ Auto-Spillover</Text>
-                    <Text style={{ fontSize: 11, color: c.subtext, marginTop: 2 }}>Move to next day automatically if not done</Text>
-                </View>
-                <Switch value={autoSpillover} onValueChange={onToggleAuto} trackColor={{ false: c.border, true: c.accent }} thumbColor={autoSpillover ? '#fff' : '#f4f3f4'} />
-            </View>
         </>
     );
 }

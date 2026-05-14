@@ -21,6 +21,7 @@ const CATEGORIES: { key: TodoCategory; label: string; emoji: string }[] = [
     { key: 'personal', label: 'Personal', emoji: '👤' },
     { key: 'shopping', label: 'Shopping', emoji: '🛒' },
     { key: 'health', label: 'Health', emoji: '❤️' },
+    { key: 'exercise', label: 'Exercise', emoji: '🏃' },
     { key: 'other', label: 'Other', emoji: '📌' },
 ];
 
@@ -30,7 +31,7 @@ const PRIORITIES: { key: Priority; label: string }[] = [
     { key: 'low', label: '🟢 Low' },
 ];
 
-const FILTERS = ['All', 'Active', 'Done', 'Work', 'Personal', 'Shopping', 'Health', 'Other'] as const;
+const FILTERS = ['All', 'Active', 'Done', 'Work', 'Personal', 'Shopping', 'Health', 'Exercise', 'Other'] as const;
 
 export default function TodoScreen() {
     const colorScheme = useColorScheme();

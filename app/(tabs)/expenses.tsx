@@ -21,6 +21,7 @@ const EXPENSE_CATEGORIES: { key: ExpenseCategory; label: string; emoji: string }
     { key: 'shopping', label: 'Shopping', emoji: '🛍️' },
     { key: 'entertainment', label: 'Entertainment', emoji: '🎬' },
     { key: 'health', label: 'Health', emoji: '💊' },
+    { key: 'exercise', label: 'Exercise', emoji: '🏋️' },
     { key: 'bills', label: 'Bills', emoji: '📄' },
     { key: 'salary', label: 'Salary', emoji: '💰' },
     { key: 'other', label: 'Other', emoji: '📦' },
